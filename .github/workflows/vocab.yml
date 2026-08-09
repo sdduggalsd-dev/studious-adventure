@@ -1,0 +1,46 @@
+name: GRE word of the hour
+
+on:
+  schedule:
+    - cron: "0 * * * *"      # every hour, on the hour (UTC). Script gates to IST waking hours.
+  workflow_dispatch:          # lets you trigger a test send manually from the Actions tab
+
+permissions:
+  contents: write             # needed to commit the updated cursor back to the repo
+
+concurrency:
+  group: gre-word-sender      # never let two runs overlap
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send the next word
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Optional overrides (uncomment to change the waking-hours window, IST):
+          # ACTIVE_HOURS_START: "8"
+          # ACTIVE_HOURS_END: "22"
+        run: python send_word.py
+
+      - name: Save progress
+        run: |
+          if [[ -n "$(git status --porcelain state.json)" ]]; then
+            git config user.name  "gre-vocab-bot"
+            git config user.email "actions@github.com"
+            git add state.json
+            git commit -m "Advance vocab cursor [skip ci]"
+            git push
+          else
+            echo "No word sent this run; nothing to commit."
+          fi
