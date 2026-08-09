@@ -1,1 +1,6 @@
-{"cursor": 0, "cycle": 1, "sent_total": 0, "last_sent_utc": null}
+{
+  "cursor": 1,
+  "cycle": 1,
+  "sent_total": 1,
+  "last_sent_utc": "2026-08-09T16:16:26+00:00"
+}
